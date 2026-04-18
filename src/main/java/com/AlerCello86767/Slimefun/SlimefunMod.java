@@ -1,8 +1,9 @@
 package com.AlerCello86767.Slimefun;
 
 import com.AlerCello86767.Slimefun.api.MultiblockRegistry;
+import com.AlerCello86767.Slimefun.api.RecipeManager;
+import com.AlerCello86767.Slimefun.machines.MachineRegistry;
 import com.AlerCello86767.Slimefun.multiblocks.AutomatedPanningMachine;
-import com.AlerCello86767.Slimefun.multiblocks.OreWasherMachine;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -23,8 +24,14 @@ public class SlimefunMod {
     
     private void commonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
+            // 注册自动淘金机（独立的多方块机器）
             MultiblockRegistry.register(new AutomatedPanningMachine());
-            MultiblockRegistry.register(new OreWasherMachine());
+            
+            // 初始化基础机器注册表
+            MachineRegistry.init();
+            
+            // 初始化默认配方
+            RecipeManager.initDefaultRecipes();
         });
     }
 }
