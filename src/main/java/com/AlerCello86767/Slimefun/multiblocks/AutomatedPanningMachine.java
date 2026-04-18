@@ -121,7 +121,12 @@ public class AutomatedPanningMachine extends MultiblockStructure {
         
         // 3秒后完成
         SCHEDULER.schedule(() -> {
-            completeProcessing(level, task);
+            if (level instanceof ServerLevel serverLevel) {
+                // 在主线程中执行完成处理
+                serverLevel.getServer().execute(() -> {
+                    completeProcessing(serverLevel, task);
+                });
+            }
         }, 3, TimeUnit.SECONDS);
     }
     
@@ -132,22 +137,25 @@ public class AutomatedPanningMachine extends MultiblockStructure {
             // 检查任务是否还在队列中（是否已经被完成）
             Queue<ProcessingTask> queue = PROCESSING_QUEUES.get(centerPos);
             if (queue != null && queue.contains(task)) {
-                if (level.isAreaLoaded(centerPos, 1)) {
-                    level.playSound(null, centerPos, SoundEvents.SAND_BREAK, 
-                        SoundSource.BLOCKS, 1.0F, 1.0F);
+                if (level instanceof ServerLevel serverLevel) {
+                    // 在主线程中播放音效和粒子
+                    serverLevel.getServer().execute(() -> {
+                        if (serverLevel.isAreaLoaded(centerPos, 1)) {
+                            serverLevel.playSound(null, centerPos, SoundEvents.SAND_BREAK, 
+                                SoundSource.BLOCKS, 1.0F, 1.0F);
 
-                    if (level instanceof ServerLevel serverLevel) {
-                        serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.GRAVEL.defaultBlockState()),
-                            centerPos.getX() + 0.5, centerPos.getY() + 1.5, centerPos.getZ() + 0.5,
-                            10, 0.5, 0.5, 0.5, 0.1);
-                    }
+                            serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.GRAVEL.defaultBlockState()),
+                                centerPos.getX() + 0.5, centerPos.getY() + 1.5, centerPos.getZ() + 0.5,
+                                10, 0.5, 0.5, 0.5, 0.1);
+                        }
+                    });
                 }
                 scheduleSound(level, centerPos, step + 1, task);
             }
         }, step * 500, TimeUnit.MILLISECONDS);
     }
     
-    private void completeProcessing(Level level, ProcessingTask task) {
+    private void completeProcessing(ServerLevel level, ProcessingTask task) {
         BlockPos centerPos = task.centerPos;
         
         // 取消还未播放的音效
@@ -167,7 +175,7 @@ public class AutomatedPanningMachine extends MultiblockStructure {
         level.playSound(null, centerPos, SoundEvents.EXPERIENCE_ORB_PICKUP, 
             SoundSource.PLAYERS, 0.5F, 1.0F);
         
-        // 随机选择物品
+        // 随机选择物品（现在在主线程中执行）
         Player player = level.getPlayerByUUID(task.playerUUID);
         if (player != null) {
             ItemStack itemToGive;
