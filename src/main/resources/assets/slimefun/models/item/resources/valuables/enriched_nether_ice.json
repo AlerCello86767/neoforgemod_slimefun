@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "slimefun:item/resources/valuables/enriched_nether_ice"
+  }
+}
